@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>數字露營隊｜因數與倍數大冒險</title>
+<style>
+  :root{
+    --night-1:#0f2a22;
+    --night-2:#173c30;
+    --parchment:#fff6e4;
+    --parchment-2:#fbe9c6;
+    --ink:#20301f;
+    --ink-soft:#4a5b46;
+    --campfire:#ff8a3d;
+    --campfire-dark:#e06a1f;
+    --pine:#2f7a5c;
+    --pine-dark:#215943;
+    --gold:#ffc94a;
+    --berry:#e4572e;
+    --teal:#4fc3b0;
+    --radius-lg:22px;
+    --radius-md:14px;
+    --shadow:0 10px 0 rgba(0,0,0,0.15), 0 16px 28px rgba(0,0,0,0.28);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:"Trebuchet MS","Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,201,74,0.10), transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(79,195,176,0.12), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(255,138,61,0.10), transparent 50%),
+      linear-gradient(160deg, var(--night-1), var(--night-2));
+    display:flex;
+    justify-content:center;
+    overflow-x:hidden;
+  }
+  .app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    position:relative;
+    padding:18px 16px 34px;
+    display:flex;
+    flex-direction:column;
+  }
+  /* firefly dots */
+  .fireflies span{
+    position:fixed; border-radius:50%; background:var(--gold);
+    opacity:.55; filter:blur(0.5px);
+    animation:float 6s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0px);}
+    50%{transform:translateY(-14px);}
+  }
+  .screen{display:none;}
+  .screen.active{display:flex; flex-direction:column; gap:6px; animation:fadeUp .35s ease;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+  .card{
+    background:linear-gradient(180deg, var(--parchment), var(--parchment-2));
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    padding:20px 18px;
+    position:relative;
+  }
+  .card::before{
+    content:"";
+    position:absolute; inset:6px;
+    border:2px dashed rgba(47,122,92,0.25);
+    border-radius:calc(var(--radius-lg) - 6px);
+    pointer-events:none;
+  }
+
+  h1,h2,h3{margin:0; font-weight:800; letter-spacing:.5px;}
+  .brand{
+    text-align:center; color:var(--parchment); padding-top:10px;
+  }
+  .brand .emoji{font-size:44px; display:block; margin-bottom:6px; filter:drop-shadow(0 4px 0 rgba(0,0,0,.25));}
+  .brand h1{font-size:26px; color:#fff8e8;}
+  .brand p{margin:6px 0 0; color:#c8e8db; font-size:13px; letter-spacing:1px;}
+  .brand .credit{margin-top:6px; font-size:12px; color:#8fd6c1;}
+
+  .stat-bar{
+    display:flex; justify-content:center; gap:10px; flex-wrap:wrap;
+    margin:14px 0 2px;
+  }
+  .pill{
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.25);
+    color:#fff8e8;
+    padding:6px 12px; border-radius:999px; font-size:13px; font-weight:700;
+    display:flex; align-items:center; gap:5px;
+  }
+
+  .btn{
+    border:none; cursor:pointer; font-family:inherit;
+    font-weight:800; font-size:16px; letter-spacing:.5px;
+    border-radius:16px; padding:14px 18px;
+    box-shadow:0 5px 0 rgba(0,0,0,0.2);
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,0.2);}
+  .btn-primary{background:linear-gradient(180deg, var(--campfire), var(--campfire-dark)); color:#fff8ec;}
+  .btn-secondary{background:linear-gradient(180deg, #fff, #f1e6c9); color:var(--pine-dark); border:2px solid rgba(47,122,92,0.25);}
+  .btn-pine{background:linear-gradient(180deg, var(--pine), var(--pine-dark)); color:#fff8ec;}
+  .btn-block{width:100%;}
+  .btn-ghost{
+    background:transparent; color:#e9f6ef; border:2px solid rgba(255,255,255,0.35);
+    box-shadow:none; padding:10px 16px; font-size:14px;
+  }
+  .btn-ghost:active{transform:translateY(2px);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  .row{display:flex; gap:10px;}
+  .col{flex:1;}
+
+  /* Trail progress - signature element */
+  .trail{
+    display:flex; align-items:center; justify-content:space-between;
+    position:relative; margin:6px 4px 2px;
+  }
+  .trail::before{
+    content:""; position:absolute; left:6%; right:6%; top:50%;
+    height:0; border-top:3px dotted rgba(47,122,92,0.35);
+    transform:translateY(-50%); z-index:0;
+  }
+  .trail-stop{
+    position:relative; z-index:1; width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+    background:#fff; border:3px solid #d8c79b; opacity:.5;
+  }
+  .trail-stop.done{opacity:1; border-color:var(--pine); background:#e7f4ec;}
+  .trail-stop.current{opacity:1; border-color:var(--campfire); background:var(--gold); box-shadow:0 0 0 5px rgba(255,138,61,0.25);}
+
+  .section-title{
+    color:#fff8e8; font-size:14px; letter-spacing:1px; margin:2px 4px; opacity:.85;
+  }
+
+  .modelist{display:flex; flex-direction:column; gap:10px;}
+  .mode-card{
+    display:flex; align-items:center; gap:12px;
+    background:#fff; border-radius:var(--radius-md); padding:12px 14px;
+    border:2px solid #e7dcb8; cursor:pointer; text-align:left;
+  }
+  .mode-card:active{transform:scale(.98);}
+  .mode-card .ic{font-size:26px; width:38px; text-align:center;}
+  .mode-card .txt{flex:1;}
+  .mode-card .txt b{display:block; font-size:15px; color:var(--ink);}
+  .mode-card .txt span{display:block; font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .mode-card .best{font-size:12px; font-weight:800; color:var(--campfire-dark); white-space:nowrap;}
+
+  .avatar-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+  .avatar-opt{
+    background:#fff; border:3px solid #e7dcb8; border-radius:16px;
+    font-size:26px; padding:10px 0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    height:56px; line-height:1;
+  }
+  .avatar-opt.selected{border-color:var(--campfire); background:#fff1de; transform:scale(1.05);}
+
+  .badge-grid{display:flex; flex-wrap:wrap; gap:8px;}
+  .badge-chip{
+    background:#fff; border:2px solid #e7dcb8; border-radius:12px;
+    padding:6px 10px; font-size:12px; font-weight:700; color:var(--ink-soft);
+  }
+  .badge-chip.unlocked{background:#fff3d6; border-color:var(--gold); color:var(--campfire-dark);}
+
+  .nick-input{
+    width:100%; margin-top:14px; padding:12px 14px; font-size:16px;
+    border:2px solid #e7dcb8; border-radius:14px; font-family:inherit;
+    color:var(--ink); background:#fff; text-align:center; font-weight:700;
+  }
+  .nick-input:focus{outline:none; border-color:var(--campfire);}
+  .nick-tip{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:6px;}
+
+  .mode-card{position:relative;}
+  .lb-trophy{
+    background:none; border:none; font-size:20px; cursor:pointer; padding:4px 6px;
+  }
+  .lb-list{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+  .lb-row{
+    display:flex; align-items:center; gap:10px; background:#fff;
+    border:2px solid #e7dcb8; border-radius:12px; padding:8px 12px;
+  }
+  .lb-row.me{border-color:var(--campfire); background:#fff1de;}
+  .lb-rank{width:26px; font-weight:900; color:var(--pine-dark); text-align:center;}
+  .lb-av{font-size:20px;}
+  .lb-name{flex:1; font-weight:700; font-size:14px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lb-score{font-weight:900; color:var(--campfire-dark); font-size:15px;}
+  .lb-note{font-size:12px; color:var(--ink-soft); text-align:center; margin-top:10px;}
+
+  /* Gameplay */
+  .top-hud{
+    display:flex; justify-content:space-between; align-items:center;
+    color:#fff8e8; font-weight:800; font-size:14px;
+  }
+  .hearts span{margin-right:2px;}
+  .hud-mid{display:flex; gap:8px; align-items:center;}
+  .combo-tag{
+    background:linear-gradient(180deg, var(--teal), #2f9c8b); color:#06322c;
+    padding:4px 10px; border-radius:999px; font-size:13px; font-weight:800;
+  }
+
+  .level-tag{
+    text-align:center; color:var(--gold); font-weight:800; font-size:13px; letter-spacing:1px;
+  }
+
+  .qcard{
+    background:linear-gradient(180deg,#fff, var(--parchment));
+    border-radius:var(--radius-lg); padding:16px 16px 6px; box-shadow:var(--shadow);
+    text-align:center; position:relative;
+  }
+  .qcount{font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:1px;}
+  .qtext{font-size:18px; font-weight:800; margin-top:8px; line-height:1.5; color:var(--ink);}
+  .qhint{font-size:11px; color:var(--ink-soft); margin-top:5px;}
+
+  .options{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
+  .opt-btn{
+    background:#fff; border:2px solid #e7dcb8; border-radius:12px;
+    padding:11px; font-size:15px; font-weight:800; color:var(--ink); cursor:pointer;
+    font-family:inherit;
+  }
+  .opt-btn:active{transform:scale(.98);}
+  .opt-btn.selected{border-color:var(--pine); background:#e9f6ef;}
+  .opt-btn.correct{border-color:var(--pine); background:#c9edd7; color:var(--pine-dark);}
+  .opt-btn.wrong{border-color:var(--berry); background:#fbdcd0; color:#8f2c14;}
+  .opt-btn.disabled-hint{opacity:.25; pointer-events:none;}
+
+  .bottom-actions{display:flex; gap:10px;}
+
+  .feedback-banner{
+    text-align:center; font-weight:800; font-size:15px; padding:8px; border-radius:12px;
+  }
+  .feedback-banner.ok{background:#d9f2e2; color:var(--pine-dark);}
+  .feedback-banner.bad{background:#fbdcd0; color:#8f2c14;}
+
+  /* Results */
+  .result-hero{text-align:center;}
+  .result-hero .rank-emoji{font-size:56px;}
+  .result-hero h2{font-size:22px; color:var(--ink); margin-top:6px;}
+  .result-score{font-size:44px; font-weight:900; color:var(--campfire-dark); text-align:center; margin:6px 0 0;}
+  .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px;}
+  .stat-box{background:#fff; border:2px solid #e7dcb8; border-radius:14px; padding:10px; text-align:center;}
+  .stat-box b{display:block; font-size:20px; color:var(--pine-dark);}
+  .stat-box span{font-size:12px; color:var(--ink-soft);}
+
+  .modal-mask{
+    position:fixed; inset:0; background:rgba(15,42,34,0.65); z-index:50;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .modal-mask.active{display:flex;}
+  .modal-box{
+    width:100%; max-width:480px; background:var(--parchment); border-radius:24px 24px 0 0;
+    padding:20px 20px 26px; max-height:80vh; overflow-y:auto;
+    animation:slideUp .3s ease; position:relative;
+  }
+  @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal-box h3{font-size:18px; margin-bottom:10px; padding-right:30px;}
+  .modal-box ul{padding-left:18px; margin:0 0 16px; font-size:14px; line-height:1.9; color:var(--ink);}
+  .modal-box li b{color:var(--campfire-dark);}
+  .modal-close{
+    position:absolute; top:14px; right:14px; width:32px; height:32px;
+    border-radius:50%; border:none; background:rgba(32,48,31,0.10);
+    color:var(--ink-soft); font-size:15px; font-weight:900; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  .modal-close:active{background:rgba(32,48,31,0.2);}
+
+  .home-scroll{flex:1; display:flex; flex-direction:column; gap:14px;}
+  .footer-space{height:6px;}
+  .link-back{background:none; border:none; color:#e9f6ef; font-weight:700; font-size:14px; cursor:pointer; padding:6px;}
+
+  /* ---------------- 平板優化 (iPad 等 ≥700px 寬螢幕) ---------------- */
+  @media (min-width:700px){
+    body{ align-items:flex-start; }
+    .app{
+      max-width:760px;
+      padding:32px 40px 56px;
+    }
+    .brand .emoji{font-size:56px;}
+    .brand h1{font-size:32px;}
+    .brand p{font-size:15px;}
+    .stat-bar{gap:14px; margin:18px 0 4px;}
+    .pill{font-size:15px; padding:8px 16px;}
+
+    .btn{font-size:18px; padding:16px 20px; border-radius:18px;}
+    .btn-ghost{font-size:15px; padding:12px 18px;}
+
+    .card{padding:26px 28px;}
+    h2{font-size:24px !important;}
+
+    /* 首頁：最高分與徽章改為更寬的多欄排列 */
+    .stat-grid{grid-template-columns:repeat(4,1fr); gap:12px;}
+    .modes-best-grid{grid-template-columns:repeat(5,1fr); gap:10px;}
+    .stat-box{padding:14px;}
+    .stat-box b{font-size:24px;}
+    .stat-box span{font-size:13px;}
+    .badge-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:10px;}
+    .badge-chip{font-size:13px; padding:8px 6px; text-align:center; white-space:normal; line-height:1.3;}
+
+    /* 選夥伴：頭像格子放大，一次看更多 */
+    .avatar-grid{grid-template-columns:repeat(8,1fr); gap:12px;}
+    .avatar-opt{font-size:32px; height:72px; border-radius:18px;}
+    .nick-input{font-size:18px; padding:14px 16px;}
+
+    /* 選模式 / 選難度：雙欄排列，卡片放大 */
+    .modelist{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+    .mode-card{padding:18px 20px; border-radius:18px;}
+    .mode-card .ic{font-size:32px; width:46px;}
+    .mode-card .txt b{font-size:17px;}
+    .mode-card .txt span{font-size:13px;}
+    .mode-card .best{font-size:13px;}
+    .lb-trophy{font-size:24px;}
+
+    /* 遊戲畫面：題目與選項放大，行動裝置觸控更好按 */
+    .top-hud{font-size:16px;}
+    .hearts{font-size:18px;}
+    .combo-tag{font-size:15px; padding:6px 14px;}
+    .level-tag{font-size:15px;}
+    .trail-stop{width:42px; height:42px; font-size:20px;}
+
+    .qcard{padding:28px 32px 16px;}
+    .qcount{font-size:13px;}
+    .qtext{font-size:26px;}
+    .qhint{font-size:14px;}
+    .feedback-banner{font-size:17px; padding:12px;}
+
+    .options{gap:12px;}
+    .opt-btn{font-size:19px; padding:18px; border-radius:16px;}
+
+    .bottom-actions{gap:14px;}
+
+    /* 結果畫面 */
+    .result-hero .rank-emoji{font-size:72px;}
+    .result-hero h2{font-size:28px;}
+    .result-score{font-size:56px;}
+
+    /* 彈窗放大，方便平板點擊 */
+    .modal-mask{align-items:center;}
+    .modal-box{
+      max-width:560px; border-radius:24px; padding:28px 30px 32px;
+      max-height:75vh;
+    }
+    .modal-box h3{font-size:21px;}
+    .modal-box ul{font-size:15px;}
+    .lb-row{padding:10px 14px;}
+    .lb-name{font-size:15px;}
+    .lb-score{font-size:17px;}
+  }
+
+  @media (min-width:1024px){
+    .app{max-width:820px;}
+  }
+</style>
+</head>
+<body>
+<div class="fireflies" id="fireflies"></div>
+<div class="app" id="app"></div>
+
+<div class="modal-mask" id="modalMask">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script>
+/* ---------------- 資料與工具 ---------------- */
+const MODES = [
+  {id:'factor', icon:'🌰', name:'因數尋寶', desc:'找出某數的因數', base:10},
+  {id:'multiple', icon:'🍃', name:'倍數追蹤', desc:'找出某數的倍數', base:10},
+  {id:'prime', icon:'🪨', name:'質合判官', desc:'判斷質數與合數', base:12},
+  {id:'gcd', icon:'🔥', name:'公因數營火', desc:'找出最大公因數', base:15},
+  {id:'lcm', icon:'⭐', name:'公倍數星圖', desc:'找出最小公倍數', base:15},
+];
+const AVATARS = ['🦊','🐻','🦉','🐿️','🦔','🐢','🐸','🦫'];
+const DIFFICULTIES = [
+  {id:'easy', icon:'🌱', name:'初階', desc:'數字較小，適合入門'},
+  {id:'medium', icon:'🌿', name:'中階', desc:'數字稍大，小小挑戰'},
+  {id:'hard', icon:'🌳', name:'高階', desc:'數字更大，全力挑戰'},
+];
+const LEVELS = [
+  {name:'🏕️ 新手營地', mult:1},
+  {name:'🌲 松林小徑', mult:1.4},
+  {name:'⛰️ 挑戰峭壁', mult:1.8},
+  {name:'👑 大師營頂', mult:2.3},
+];
+const QUESTIONS_PER_GAME = 12;
+const MAX_HEARTS = 3;
+const MAX_HINTS = 3;
+
+function gcd(a,b){ return b===0? a : gcd(b, a%b); }
+function lcm(a,b){ return (a*b)/gcd(a,b); }
+function isPrime(n){
+  if(n<2) return false;
+  for(let i=2;i*i<=n;i++){ if(n%i===0) return false; }
+  return true;
+}
+function factorsOf(n){
+  const f=[];
+  for(let i=1;i<=n;i++){ if(n%i===0) f.push(i); }
+  return f;
+}
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function uniquePush(pool, val, exclude){
+  if(val>0 && !exclude.has(val)){ pool.push(val); exclude.add(val); }
+}
+
+/* 各難度的數字範圍 */
+const DIFF_RANGES = {
+  factor:  {easy:[8,24],  medium:[24,64],  hard:[64,160]},
+  multiple:{easy:[[2,14],[2,9]], medium:[[10,25],[4,12]], hard:[[20,45],[6,15]]}, // [base範圍, 倍數範圍]
+  prime:   {easy:[2,30],  medium:[20,70],  hard:[60,150]},
+  gcd:     {easy:[6,24],  medium:[20,60],  hard:[50,150]},
+  lcm:     {easy:[2,8],   medium:[6,15],   hard:[10,24]},
+};
+
+/* 產生單題 */
+function genQuestion(modeId, difficulty){
+  const dr = DIFF_RANGES[modeId][difficulty];
+
+  if(modeId==='factor'){
+    const [lo,hi] = dr;
+    const n = randInt(lo,hi);
+    const facs = factorsOf(n);
+    const correct = facs[randInt(1,facs.length-1)]; // 避免全部都選1
+    const exclude = new Set(facs); exclude.add(correct);
+    const distract=[];
+    let tries=0;
+    while(distract.length<3 && tries<50){
+      tries++;
+      const cand = correct + randInt(-6,6)*randInt(1,3);
+      uniquePush(distract, cand, exclude);
+    }
+    while(distract.length<3){ uniquePush(distract, randInt(2,n+10), exclude); }
+    const options = shuffle([correct,...distract]);
+    return {
+      text:`下列何者是 ${n} 的因數？`,
+      note:`（提示：因數要能整除 ${n}）`,
+      options: options.map(String),
+      correctIndex: options.indexOf(correct),
+      explain:`${n} ÷ ${correct} = ${n/correct}，所以 ${correct} 是 ${n} 的因數。`,
+      mainKey:`factor_${n}`
+    };
+  }
+  if(modeId==='multiple'){
+    const [baseRange,kRange] = dr;
+    const base = randInt(baseRange[0],baseRange[1]);
+    const k = randInt(kRange[0],kRange[1]);
+    const correct = base*k;
+    const exclude = new Set(); exclude.add(correct);
+    const distract=[];
+    let tries=0;
+    while(distract.length<3 && tries<50){
+      tries++;
+      const cand = correct + randInt(-2,2)*randInt(1,base-1||1) + (Math.random()<0.5?1:-1);
+      if(cand>0 && cand%base!==0) uniquePush(distract, cand, exclude);
+    }
+    while(distract.length<3){
+      const cand = randInt(1,base*(kRange[1]+3));
+      if(cand>0 && cand%base!==0) uniquePush(distract, cand, exclude);
+    }
+    const options = shuffle([correct,...distract]);
+    return {
+      text:`下列何者是 ${base} 的倍數？`,
+      note:`（提示：倍數是 ${base} 乘以整數的結果）`,
+      options: options.map(String),
+      correctIndex: options.indexOf(correct),
+      explain:`${base} × ${k} = ${correct}，所以 ${correct} 是 ${base} 的倍數。`,
+      mainKey:`multiple_${base}`
+    };
+  }
+  if(modeId==='prime'){
+    const [lo,hi] = dr;
+    let n;
+    if(Math.random()<0.5){
+      const primesAll=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149];
+      const inRange = primesAll.filter(p=>p>=lo && p<=hi);
+      n = inRange.length ? inRange[randInt(0,inRange.length-1)] : primesAll[randInt(0,primesAll.length-1)];
+    } else {
+      let guard=0;
+      do{ n = randInt(lo,hi); guard++; } while(isPrime(n) && guard<50);
+    }
+    const ans = isPrime(n) ? '質數' : '合數';
+    const options = shuffle(['質數','合數']);
+    return {
+      text:`${n} 是「質數」還是「合數」？`,
+      note:`（提示：質數只有 1 和自己兩個因數）`,
+      options,
+      correctIndex: options.indexOf(ans),
+      explain: isPrime(n)? `${n} 只能被 1 和 ${n} 整除，是質數。` : `${n} 除了 1 和自己之外還有其他因數，是合數。`,
+      mainKey:`prime_${n}`
+    };
+  }
+  if(modeId==='gcd'){
+    const [lo,hi] = dr;
+    const a = randInt(lo,hi), b = randInt(lo,hi);
+    const correct = gcd(a,b);
+    const exclude = new Set(); exclude.add(correct);
+    const distract=[];
+    const candidates = factorsOf(a).filter(x=>x!==correct);
+    shuffle(candidates).forEach(c=>{ if(distract.length<3) uniquePush(distract,c,exclude); });
+    let tries=0;
+    while(distract.length<3 && tries<50){
+      tries++;
+      uniquePush(distract, correct+randInt(-4,4), exclude);
+    }
+    while(distract.length<3){ uniquePush(distract, randInt(1,Math.max(a,b)), exclude); }
+    const options = shuffle([correct,...distract]);
+    return {
+      text:`${a} 和 ${b} 的最大公因數是？`,
+      note:`（提示：找出兩數共同因數中最大的那個）`,
+      options: options.map(String),
+      correctIndex: options.indexOf(correct),
+      explain:`${a} 和 ${b} 的最大公因數是 ${correct}。`,
+      mainKey:`gcd_${Math.min(a,b)}_${Math.max(a,b)}`
+    };
+  }
+  if(modeId==='lcm'){
+    const [lo,hi] = dr;
+    const a = randInt(lo,hi), b = randInt(lo,hi);
+    const correct = lcm(a,b);
+    const exclude = new Set(); exclude.add(correct);
+    const distract=[];
+    let tries=0;
+    while(distract.length<3 && tries<50){
+      tries++;
+      const cand = correct + randInt(-2,3)*Math.min(a,b);
+      uniquePush(distract, cand, exclude);
+    }
+    while(distract.length<3){ uniquePush(distract, randInt(2,correct*2), exclude); }
+    const options = shuffle([correct,...distract]);
+    return {
+      text:`${a} 和 ${b} 的最小公倍數是？`,
+      note:`（提示：找出兩數共同倍數中最小的那個）`,
+      options: options.map(String),
+      correctIndex: options.indexOf(correct),
+      explain:`${a} 和 ${b} 的最小公倍數是 ${correct}。`,
+      mainKey:`lcm_${Math.min(a,b)}_${Math.max(a,b)}`
+    };
+  }
+}
+function genQuestions(modeId,difficulty,count){
+  const list=[];
+  const usedKeys = new Set();
+  let guard=0;
+  // 第一輪：盡量確保題目主要數字不重複
+  while(list.length<count && guard<count*80){
+    guard++;
+    const q = genQuestion(modeId,difficulty);
+    if(usedKeys.has(q.mainKey)) continue;
+    usedKeys.add(q.mainKey);
+    list.push(q);
+  }
+  // 保底：若範圍太窄湊不滿題數，允許少量重複避免卡住
+  guard=0;
+  while(list.length<count && guard<count*20){
+    guard++;
+    list.push(genQuestion(modeId,difficulty));
+  }
+  return list;
+}
+
+/* ---------------- 持久化資料 ---------------- */
+const DEFAULT_STATS = {stars:0, plays:0, badges:[], bestScores:{}, modesCleared:[]};
+let stats = {...DEFAULT_STATS};
+
+async function loadStats(){
+  try{
+    const r = await window.storage.get('camp-stats');
+    if(r && r.value){ stats = {...DEFAULT_STATS, ...JSON.parse(r.value)}; }
+  }catch(e){ /* 尚無資料，使用預設值 */ }
+}
+async function saveStats(){
+  try{ await window.storage.set('camp-stats', JSON.stringify(stats)); }
+  catch(e){ console.warn('儲存失敗', e); }
+}
+
+/* ---------------- 排行榜（多人共用） ---------------- */
+async function loadLeaderboard(modeId){
+  try{
+    const r = await window.storage.get(`leaderboard:${modeId}`, true);
+    if(r && r.value) return JSON.parse(r.value);
+  }catch(e){ /* 尚無資料 */ }
+  return [];
+}
+async function submitScore(modeId, entry){
+  const list = await loadLeaderboard(modeId);
+  list.push(entry);
+  list.sort((a,b)=> b.score - a.score);
+  const trimmed = list.slice(0,30);
+  try{ await window.storage.set(`leaderboard:${modeId}`, JSON.stringify(trimmed), true); }
+  catch(e){ console.warn('排行榜儲存失敗', e); }
+  return trimmed;
+}
+async function showLeaderboard(modeId, highlightEntry){
+  const mode = MODES.find(m=>m.id===modeId);
+  openModal(`<h3>🏆 ${mode.icon} ${mode.name}排行榜</h3><div class="lb-list" id="lbList">讀取中...</div>
+    <div class="lb-note">所有玩家的暱稱與分數會公開顯示在此排行榜中</div>`);
+  const list = await loadLeaderboard(modeId);
+  const lbList = document.getElementById('lbList');
+  if(!lbList) return; // 使用者可能已關閉視窗
+  if(list.length===0){
+    lbList.innerHTML = `<div class="lb-note">還沒有人挑戰過這個模式，當第一個上榜的人吧！</div>`;
+    return;
+  }
+  lbList.innerHTML = list.slice(0,10).map((e,i)=>{
+    const isMe = highlightEntry && e.name===highlightEntry.name && e.score===highlightEntry.score && e.time===highlightEntry.time;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    const diff = DIFFICULTIES.find(d=>d.id===e.difficulty);
+    return `<div class="lb-row ${isMe?'me':''}">
+      <div class="lb-rank">${medal}</div>
+      <div class="lb-av">${e.avatar||'🦊'}</div>
+      <div class="lb-name">${escapeHtml(e.name)} ${diff?`<span style="font-weight:400;color:var(--ink-soft);">${diff.icon}${diff.name}</span>`:''}</div>
+      <div class="lb-score">${e.score}</div>
+    </div>`;
+  }).join('');
+}
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ---------------- 遊戲狀態 ---------------- */
+let game = null;
+function randomNickname(){
+  const words = ['勇敢的','神秘的','閃電','機智','冒險','迷路的','元氣','傳說中'];
+  return words[randInt(0,words.length-1)] + '探險家' + randInt(10,99);
+}
+let ui = {avatar: AVATARS[0], nickname: randomNickname()};
+
+/* ---------------- 畫面渲染 ---------------- */
+const app = document.getElementById('app');
+
+function setScreen(html){
+  app.innerHTML = `<div class="screen active">${html}</div>`;
+}
+function openModal(html){
+  document.getElementById('modalBox').innerHTML = `<button class="modal-close" id="modalCloseBtn" aria-label="關閉">✕</button>` + html;
+  document.getElementById('modalMask').classList.add('active');
+  document.getElementById('modalCloseBtn').onclick = closeModal;
+}
+function closeModal(){
+  document.getElementById('modalMask').classList.remove('active');
+}
+document.getElementById('modalMask').addEventListener('click', (e)=>{
+  if(e.target.id==='modalMask') closeModal();
+});
+
+function renderHome(){
+  const badgeChips = allBadgeDefs().map(b=>{
+    const on = stats.badges.includes(b.id);
+    return `<div class="badge-chip ${on?'unlocked':''}">${b.icon} ${b.name}</div>`;
+  }).join('');
+
+  const bestList = MODES.map(m=>{
+    const s = Math.max(...DIFFICULTIES.map(d=>stats.bestScores[`${m.id}:${d.id}`] ?? -1));
+    return `<div class="stat-box"><b>${s<0?'—':s}</b><span>${m.icon} ${m.name}</span></div>`;
+  }).join('');
+
+  setScreen(`
+    <div class="brand">
+      <span class="emoji">🏕️</span>
+      <h1>數字露營隊</h1>
+      <p>因數與倍數大冒險・小五積分挑戰</p>
+      <div class="credit">✨ 參考仙姑凱西設計 ✨</div>
+    </div>
+    <div class="stat-bar">
+      <div class="pill">⭐ ${stats.stars}</div>
+      <div class="pill">🏅 ${stats.badges.length}</div>
+      <div class="pill">🎮 ${stats.plays}</div>
+    </div>
+
+    <div class="home-scroll">
+      <div class="card" style="text-align:center;">
+        <button class="btn btn-primary btn-block" id="btnStart">🚀 出發挑戰</button>
+        <div style="height:10px"></div>
+        <button class="btn btn-secondary btn-block" id="btnHelp">📖 玩法說明</button>
+      </div>
+
+      <div>
+        <div class="section-title">各模式最高分</div>
+        <div class="card">
+          <div class="stat-grid modes-best-grid">${bestList}</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">成就徽章</div>
+        <div class="card">
+          <div class="badge-grid">${badgeChips}</div>
+        </div>
+      </div>
+    </div>
+  `);
+  document.getElementById('btnStart').onclick = renderAvatarSelect;
+  document.getElementById('btnHelp').onclick = showHelp;
+}
+
+function showHelp(){
+  openModal(`
+    <h3>📖 玩法說明</h3>
+    <ul>
+      <li>⚡ 每題答對都有<b>積分</b>，連續答對會累積<b>連擊</b>，連擊越高加分越猛（最多 x8）！</li>
+      <li>💔 答錯會扣分、掉一顆愛心，<b>愛心 3 顆</b>用完就得回營地重新出發。</li>
+      <li>🏔️ 每 3 題晉升一個營地，營地越後面<b>基本分越高</b>！</li>
+      <li>💡「小幫手」每場可用 3 次：會排除兩個錯誤選項。</li>
+      <li>♾️ 沒有時間壓力，慢慢想，想清楚再作答！</li>
+      <li>👑 通關 12 題後依表現獲得稱號與星星！</li>
+    </ul>
+    <button class="btn btn-primary btn-block" id="btnGotIt">我懂了，出發！</button>
+  `);
+  document.getElementById('btnGotIt').onclick = closeModal;
+}
+
+function renderAvatarSelect(){
+  const grid = AVATARS.map(a=>`<div class="avatar-opt ${a===ui.avatar?'selected':''}" data-a="${a}">${a}</div>`).join('');
+  setScreen(`
+    <button class="link-back" id="btnBack">← 返回</button>
+    <div class="card">
+      <h2 style="text-align:center; color:var(--ink);">選擇你的夥伴 👋</h2>
+      <div class="avatar-grid" style="margin-top:14px;">${grid}</div>
+      <input type="text" class="nick-input" id="nickInput" maxlength="10" placeholder="輸入你的探險家代號" value="${ui.nickname}">
+      <div class="nick-tip">這個代號會顯示在排行榜上，讓大家看到你的成績 🏆</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="btnNext">出發挑戰！</button>
+  `);
+  document.getElementById('btnBack').onclick = renderHome;
+  document.querySelectorAll('.avatar-opt').forEach(el=>{
+    el.onclick = ()=>{ ui.avatar = el.dataset.a; renderAvatarSelect(); };
+  });
+  const nickInput = document.getElementById('nickInput');
+  document.getElementById('btnNext').onclick = ()=>{
+    const val = nickInput.value.trim();
+    ui.nickname = val || randomNickname();
+    renderModeSelect();
+  };
+}
+
+function renderModeSelect(){
+  const cards = MODES.map(m=>{
+    const bestAny = DIFFICULTIES.map(d=>stats.bestScores[`${m.id}:${d.id}`]).filter(v=>v!=null);
+    const bestText = bestAny.length ? '最高 '+Math.max(...bestAny) : '尚未挑戰';
+    return `
+    <div class="mode-card" data-id="${m.id}">
+      <div class="ic">${m.icon}</div>
+      <div class="txt"><b>${m.name}</b><span>${m.desc}</span></div>
+      <div class="best">${bestText}</div>
+      <button class="lb-trophy" data-lb="${m.id}" title="查看排行榜">🏆</button>
+    </div>
+  `;}).join('');
+  setScreen(`
+    <button class="link-back" id="btnBack">← 返回</button>
+    <div class="card">
+      <h2 style="text-align:center; color:var(--ink);">選擇挑戰模式 🎯</h2>
+      <div class="modelist" style="margin-top:14px;">${cards}</div>
+    </div>
+  `);
+  document.getElementById('btnBack').onclick = renderAvatarSelect;
+  document.querySelectorAll('.mode-card').forEach(el=>{
+    el.onclick = ()=> renderDifficultySelect(el.dataset.id);
+  });
+  document.querySelectorAll('.lb-trophy').forEach(btn=>{
+    btn.onclick = (e)=>{ e.stopPropagation(); showLeaderboard(btn.dataset.lb); };
+  });
+}
+
+function renderDifficultySelect(modeId){
+  const mode = MODES.find(m=>m.id===modeId);
+  const cards = DIFFICULTIES.map(d=>{
+    const key = `${modeId}:${d.id}`;
+    const best = stats.bestScores[key];
+    return `
+    <div class="mode-card" data-diff="${d.id}">
+      <div class="ic">${d.icon}</div>
+      <div class="txt"><b>${d.name}</b><span>${d.desc}</span></div>
+      <div class="best">${best ? '最高 '+best : '尚未挑戰'}</div>
+    </div>
+  `;}).join('');
+  setScreen(`
+    <button class="link-back" id="btnBack">← 返回</button>
+    <div class="card">
+      <h2 style="text-align:center; color:var(--ink);">${mode.icon} ${mode.name}</h2>
+      <p style="text-align:center; color:var(--ink-soft); font-size:13px; margin-top:4px;">選擇難度 🌱🌿🌳</p>
+      <div class="modelist" style="margin-top:14px;">${cards}</div>
+    </div>
+  `);
+  document.getElementById('btnBack').onclick = renderModeSelect;
+  document.querySelectorAll('.mode-card').forEach(el=>{
+    el.onclick = ()=> startGame(modeId, el.dataset.diff);
+  });
+}
+
+function startGame(modeId, difficulty){
+  game = {
+    modeId,
+    difficulty,
+    questions: genQuestions(modeId, difficulty, QUESTIONS_PER_GAME),
+    index:0,
+    hearts:MAX_HEARTS,
+    score:0,
+    streak:0,
+    maxStreak:0,
+    hintsLeft:MAX_HINTS,
+    correctCount:0,
+    hintDisabled:[],
+    answered:false,
+  };
+  renderQuestion();
+}
+
+function currentLevel(){
+  return Math.min(3, Math.floor(game.index/3));
+}
+
+function renderQuestion(){
+  const q = game.questions[game.index];
+  const lvl = currentLevel();
+  const mode = MODES.find(m=>m.id===game.modeId);
+  const mult = Math.min(8, 1+game.streak);
+
+  const trailStops = LEVELS.map((l,i)=>{
+    const cls = i<lvl?'done':(i===lvl?'current':'');
+    return `<div class="trail-stop ${cls}">${l.name.split(' ')[0]}</div>`;
+  }).join('');
+
+  const optionsHtml = q.options.map((opt,i)=>{
+    const disabled = game.hintDisabled.includes(i) ? 'disabled-hint' : '';
+    return `<button class="opt-btn ${disabled}" data-i="${i}" ${game.hintDisabled.includes(i)?'disabled':''}>${opt}</button>`;
+  }).join('');
+
+  setScreen(`
+    <div class="top-hud">
+      <button class="btn btn-ghost" id="btnHome">🏠 回首頁</button>
+      <div class="hearts">${'❤️'.repeat(game.hearts)}${'🖤'.repeat(MAX_HEARTS-game.hearts)}</div>
+      <div class="hud-mid">
+        <div class="combo-tag">🔥 x${mult}</div>
+      </div>
+    </div>
+    <div class="trail">${trailStops}</div>
+    <div class="level-tag">${LEVELS[lvl].name} ・ ${mode.icon} ${mode.name} ・ ${DIFFICULTIES.find(d=>d.id===game.difficulty).icon} ${DIFFICULTIES.find(d=>d.id===game.difficulty).name}</div>
+
+    <div class="qcard">
+      <div class="qcount">第 ${game.index+1} / ${QUESTIONS_PER_GAME} 題　⭐ ${game.score} 分</div>
+      <div class="qtext">${q.text}</div>
+      <div class="qhint">${q.note}</div>
+    </div>
+
+    <div class="options">${optionsHtml}</div>
+
+    <div class="bottom-actions">
+      <button class="btn btn-secondary col" id="btnHint" ${game.hintsLeft<=0?'disabled':''}>💡 小幫手 x${game.hintsLeft}</button>
+      <button class="btn btn-primary col" id="btnConfirm" disabled>✅ 確認答案</button>
+    </div>
+  `);
+
+  document.getElementById('btnHome').onclick = ()=>confirmQuit();
+  document.getElementById('btnHint').onclick = useHint;
+
+  let selected = null;
+  const optBtns = document.querySelectorAll('.opt-btn');
+  optBtns.forEach(btn=>{
+    btn.onclick = ()=>{
+      if(game.answered) return;
+      optBtns.forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selected = parseInt(btn.dataset.i);
+      document.getElementById('btnConfirm').disabled = false;
+    };
+  });
+  document.getElementById('btnConfirm').onclick = ()=>{
+    if(selected===null || game.answered) return;
+    submitAnswer(selected);
+  };
+}
+
+function confirmQuit(){
+  openModal(`
+    <h3>要離開這場挑戰嗎？</h3>
+    <p style="font-size:14px; color:var(--ink-soft);">目前進度將不會保留，確定要回主畫面嗎？</p>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn btn-secondary col" id="mCancel">繼續挑戰</button>
+      <button class="btn btn-primary col" id="mQuit">回主畫面</button>
+    </div>
+  `);
+  document.getElementById('mCancel').onclick = closeModal;
+  document.getElementById('mQuit').onclick = ()=>{ closeModal(); renderHome(); };
+}
+
+function useHint(){
+  if(game.hintsLeft<=0 || game.answered) return;
+  const q = game.questions[game.index];
+  if(q.options.length<=2){
+    // 二選一題型：小幫手直接標記排除錯誤選項不適用，改為輕微提示
+    game.hintsLeft--;
+    const banner = document.querySelector('.qhint');
+    if(banner) banner.textContent = q.note + ' ✨小幫手悄悄說：仔細檢查是否能被其他數整除。';
+    document.getElementById('btnHint').textContent = `💡 小幫手 x${game.hintsLeft}`;
+    if(game.hintsLeft<=0) document.getElementById('btnHint').disabled = true;
+    return;
+  }
+  const wrongIdx = q.options.map((_,i)=>i).filter(i=>i!==q.correctIndex);
+  const toDisable = shuffle(wrongIdx).slice(0,2);
+  game.hintDisabled = toDisable;
+  game.hintsLeft--;
+  toDisable.forEach(i=>{
+    const btn = document.querySelector(`.opt-btn[data-i="${i}"]`);
+    if(btn){ btn.classList.add('disabled-hint'); btn.disabled = true; }
+  });
+  document.getElementById('btnHint').textContent = `💡 小幫手 x${game.hintsLeft}`;
+  if(game.hintsLeft<=0) document.getElementById('btnHint').disabled = true;
+}
+
+function submitAnswer(selectedIndex){
+  game.answered = true;
+  const q = game.questions[game.index];
+  const optBtns = document.querySelectorAll('.opt-btn');
+  const isCorrect = selectedIndex===q.correctIndex;
+
+  optBtns.forEach((b,i)=>{
+    b.disabled = true;
+    if(i===q.correctIndex) b.classList.add('correct');
+    else if(i===selectedIndex) b.classList.add('wrong');
+  });
+
+  const lvl = currentLevel();
+  const base = Math.round(MODES.find(m=>m.id===game.modeId).base * LEVELS[lvl].mult);
+
+  if(isCorrect){
+    const mult = Math.min(8, 1+game.streak);
+    game.score += base*mult;
+    game.streak++;
+    game.maxStreak = Math.max(game.maxStreak, game.streak);
+    game.correctCount++;
+  } else {
+    game.hearts--;
+    game.streak = 0;
+    game.score = Math.max(0, game.score-5);
+  }
+
+  const bannerHtml = `<div class="feedback-banner ${isCorrect?'ok':'bad'}">
+    ${isCorrect? '🎉 答對了！' : '💥 差一點！'} ${q.explain}
+  </div>`;
+  const qcard = document.querySelector('.qcard');
+  qcard.insertAdjacentHTML('beforeend', bannerHtml);
+
+  const confirmBtn = document.getElementById('btnConfirm');
+  const hintBtn = document.getElementById('btnHint');
+  hintBtn.disabled = true;
+  confirmBtn.disabled = false;
+  confirmBtn.textContent = (game.hearts<=0) ? '查看結果' : (game.index+1>=QUESTIONS_PER_GAME ? '🏁 查看結果' : '➡️ 下一題');
+  confirmBtn.onclick = ()=>{
+    if(game.hearts<=0){ endGame(false); return; }
+    game.index++;
+    if(game.index>=QUESTIONS_PER_GAME){ endGame(true); return; }
+    game.answered = false;
+    game.hintDisabled = [];
+    renderQuestion();
+  };
+
+  // 即時更新愛心與分數顯示
+  document.querySelector('.hearts').innerHTML = '❤️'.repeat(Math.max(0,game.hearts))+'🖤'.repeat(MAX_HEARTS-Math.max(0,game.hearts));
+  document.querySelector('.qcount').textContent = `第 ${game.index+1} / ${QUESTIONS_PER_GAME} 題　⭐ ${game.score} 分`;
+}
+
+function allBadgeDefs(){
+  return [
+    {id:'first', icon:'🌟', name:'初次挑戰'},
+    {id:'flawless', icon:'💎', name:'零失誤通關'},
+    {id:'combo', icon:'🔥', name:'連擊高手'},
+    {id:'allmodes', icon:'🗺️', name:'五模式制霸'},
+    {id:'helper', icon:'🧭', name:'小幫手達人'},
+  ];
+}
+
+async function endGame(completed){
+  stats.plays++;
+  const bestKey = `${game.modeId}:${game.difficulty}`;
+  const prevBest = stats.bestScores[bestKey] || 0;
+  stats.bestScores[bestKey] = Math.max(prevBest, game.score);
+
+  let rank, starsEarned;
+  if(!completed){
+    rank = {icon:'🏳️', name:'再接再厲'};
+    starsEarned = 0;
+  } else {
+    if(game.correctCount===QUESTIONS_PER_GAME){ rank={icon:'👑',name:'傳說大師'}; starsEarned=3; }
+    else if(game.correctCount>=9){ rank={icon:'🔥',name:'因數高手'}; starsEarned=2; }
+    else if(game.correctCount>=6){ rank={icon:'🎯',name:'認真學徒'}; starsEarned=1; }
+    else { rank={icon:'🌱',name:'新手探險家'}; starsEarned=1; }
+    if(!stats.modesCleared.includes(game.modeId)) stats.modesCleared.push(game.modeId);
+  }
+  stats.stars += starsEarned;
+
+  const newBadges = [];
+  if(!stats.badges.includes('first')){ stats.badges.push('first'); newBadges.push('first'); }
+  if(completed && game.correctCount===QUESTIONS_PER_GAME && game.hearts===MAX_HEARTS && !stats.badges.includes('flawless')){
+    stats.badges.push('flawless'); newBadges.push('flawless');
+  }
+  if(game.maxStreak>=6 && !stats.badges.includes('combo')){
+    stats.badges.push('combo'); newBadges.push('combo');
+  }
+  if(completed && game.hintsLeft===0 && !stats.badges.includes('helper')){
+    stats.badges.push('helper'); newBadges.push('helper');
+  }
+  if(MODES.every(m=>stats.modesCleared.includes(m.id)) && !stats.badges.includes('allmodes')){
+    stats.badges.push('allmodes'); newBadges.push('allmodes');
+  }
+
+  await saveStats();
+
+  const scoreEntry = {name: ui.nickname, avatar: ui.avatar, score: game.score, difficulty: game.difficulty, time: Date.now()};
+  if(game.index+1 >= 3 || completed){ // 至少打完一個小關卡才計入排行榜
+    await submitScore(game.modeId, scoreEntry);
+  }
+
+  renderResults(completed, rank, starsEarned, newBadges, scoreEntry);
+}
+
+function renderResults(completed, rank, starsEarned, newBadges, scoreEntry){
+  const newBadgeHtml = newBadges.length ? `
+    <div class="section-title" style="color:var(--pine-dark);">🎁 新獲得徽章</div>
+    <div class="badge-grid">${newBadges.map(id=>{
+      const b = allBadgeDefs().find(x=>x.id===id);
+      return `<div class="badge-chip unlocked">${b.icon} ${b.name}</div>`;
+    }).join('')}</div>
+  ` : '';
+
+  setScreen(`
+    <div class="card result-hero">
+      <div class="rank-emoji">${rank.icon}</div>
+      <h2>${rank.name}</h2>
+      <div style="font-size:13px; color:var(--ink-soft); font-weight:700;">${DIFFICULTIES.find(d=>d.id===game.difficulty).icon} ${DIFFICULTIES.find(d=>d.id===game.difficulty).name}難度</div>
+      <div class="result-score">${game.score}<span style="font-size:16px;"> 分</span></div>
+      <div style="margin-top:4px; color:var(--ink-soft); font-size:13px;">${'⭐'.repeat(starsEarned)||'再試一次就能拿到星星！'}</div>
+
+      <div class="stat-grid">
+        <div class="stat-box"><b>${game.correctCount}</b><span>答對題數</span></div>
+        <div class="stat-box"><b>x${Math.min(8,game.maxStreak+ (game.maxStreak>0?1:0))||1}</b><span>最大連擊</span></div>
+        <div class="stat-box"><b>${Math.min(game.index+1,QUESTIONS_PER_GAME)}</b><span>到達關卡題數</span></div>
+        <div class="stat-box"><b>${starsEarned}</b><span>獲得星星</span></div>
+      </div>
+      ${newBadgeHtml}
+    </div>
+
+    <button class="btn btn-pine btn-block" id="btnLB">🏆 查看本模式排行榜</button>
+    <button class="btn btn-primary btn-block" id="btnAgain">🔁 再玩一次</button>
+    <div class="row">
+      <button class="btn btn-secondary col" id="btnSwitch">🎯 換個模式</button>
+      <button class="btn btn-secondary col" id="btnHome2">🏠 回主畫面</button>
+    </div>
+  `);
+  document.getElementById('btnLB').onclick = ()=> showLeaderboard(game.modeId, scoreEntry);
+  document.getElementById('btnAgain').onclick = ()=> startGame(game.modeId, game.difficulty);
+  document.getElementById('btnSwitch').onclick = renderModeSelect;
+  document.getElementById('btnHome2').onclick = renderHome;
+}
+
+/* ---------------- 螢火蟲裝飾 ---------------- */
+function initFireflies(){
+  const wrap = document.getElementById('fireflies');
+  for(let i=0;i<14;i++){
+    const s = document.createElement('span');
+    const size = randInt(2,5);
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.left = randInt(0,100)+'vw';
+    s.style.top = randInt(0,100)+'vh';
+    s.style.animationDelay = (Math.random()*4)+'s';
+    s.style.animationDuration = (4+Math.random()*4)+'s';
+    wrap.appendChild(s);
+  }
+}
+
+/* ---------------- 啟動 ---------------- */
+(async function init(){
+  initFireflies();
+  await loadStats();
+  renderHome();
+})();
+</script>
+</body>
+</html>
